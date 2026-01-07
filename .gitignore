@@ -44,6 +44,9 @@ data/outputs/*
 data/chroma_db/*
 !data/.gitkeep
 
+# Test files
+test_example/*.pdf
+
 # Frontend
 frontend/node_modules/
 frontend/.next/
