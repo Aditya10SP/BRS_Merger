@@ -1,0 +1,49 @@
+{
+    "brs_id": "BRS-SAMPLE-001",
+    "title": "Sample Authentication System BRS",
+    "version": "v1.0",
+    "metadata": {
+        "doc_id": "BRS-2024-001",
+        "doc_type": "brs",
+        "version": "v1.0",
+        "source_file": "sample_brs.pdf"
+    },
+    "sections": [
+        {
+            "metadata": {
+                "section_id": "SEC-001",
+                "section_title": "Introduction",
+                "section_path": "1"
+            },
+            "content": "This document specifies the business requirements for the Authentication System. The system shall provide secure user authentication and authorization capabilities for the enterprise application.",
+            "subsections": []
+        },
+        {
+            "metadata": {
+                "section_id": "SEC-002",
+                "section_title": "User Authentication",
+                "section_path": "2"
+            },
+            "content": "The system shall support the following authentication methods:\n\n1. Username and password authentication\n2. Multi-factor authentication (MFA) using SMS or authenticator apps\n3. Single Sign-On (SSO) integration with enterprise identity providers\n\nSession Management:\n- Session timeout shall be 30 minutes of inactivity\n- Users shall be able to extend their session before timeout\n- Maximum session duration shall be 8 hours",
+            "subsections": []
+        },
+        {
+            "metadata": {
+                "section_id": "SEC-003",
+                "section_title": "Password Requirements",
+                "section_path": "3"
+            },
+            "content": "Password Policy:\n- Minimum length: 12 characters\n- Must contain: uppercase, lowercase, numbers, and special characters\n- Password history: Last 5 passwords cannot be reused\n- Password expiration: 90 days\n- Account lockout: 5 failed attempts, 30-minute lockout period",
+            "subsections": []
+        },
+        {
+            "metadata": {
+                "section_id": "SEC-004",
+                "section_title": "Authorization",
+                "section_path": "4"
+            },
+            "content": "The system shall implement role-based access control (RBAC):\n\n1. Users shall be assigned to one or more roles\n2. Roles shall have defined permissions\n3. Permissions shall be granular at the feature/function level\n4. Administrative users shall be able to manage roles and permissions",
+            "subsections": []
+        }
+    ]
+}

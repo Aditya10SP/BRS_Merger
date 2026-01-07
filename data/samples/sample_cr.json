@@ -1,0 +1,36 @@
+{
+    "cr_id": "CR-2024-042",
+    "title": "Increase Session Timeout and Update Password Policy",
+    "priority": "high",
+    "approval_status": "approved",
+    "source_file": "sample_cr.pdf",
+    "deltas": [
+        {
+            "delta_id": "CR-2024-042-DELTA-001",
+            "impacted_section_id": "SEC-002",
+            "impacted_section_title": "User Authentication",
+            "change_type": "modify",
+            "old_content": "Session timeout shall be 30 minutes of inactivity",
+            "new_content": "Session timeout shall be 60 minutes of inactivity",
+            "rationale": "User feedback indicated that 30 minutes was too short for typical workflows. Extended to 60 minutes to improve user experience while maintaining security."
+        },
+        {
+            "delta_id": "CR-2024-042-DELTA-002",
+            "impacted_section_id": "SEC-003",
+            "impacted_section_title": "Password Requirements",
+            "change_type": "modify",
+            "old_content": "Password expiration: 90 days",
+            "new_content": "Password expiration: 180 days",
+            "rationale": "Align with updated NIST guidelines that recommend longer password expiration periods to reduce user fatigue and password reuse."
+        },
+        {
+            "delta_id": "CR-2024-042-DELTA-003",
+            "impacted_section_id": "SEC-002",
+            "impacted_section_title": "User Authentication",
+            "change_type": "add",
+            "old_content": null,
+            "new_content": "Biometric Authentication:\n- The system shall support fingerprint authentication on supported devices\n- The system shall support facial recognition on supported devices",
+            "rationale": "Add support for biometric authentication to enhance security and user convenience on mobile devices."
+        }
+    ]
+}

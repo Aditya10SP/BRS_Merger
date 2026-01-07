@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 25 100% 55%; /* ICICI Orange #EC661C */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 60% 16%; /* ICICI Navy Blue #0C2340 */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 25 100% 55%; /* ICICI Orange */
+    --accent-foreground: 220 60% 16%; /* ICICI Navy */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 25 100% 55%; /* ICICI Orange */
+    --radius: 0.75rem; /* Rounded corners */
+    --chart-1: 25 100% 55%; /* ICICI Orange */
+    --chart-2: 220 60% 16%; /* ICICI Navy */
+    --chart-3: 47 95% 57%;
+    --chart-4: 86 77% 34%;
+    --chart-5: 12 76% 61%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 25 100% 55%; /* ICICI Orange */
+    --primary-foreground: 220 60% 16%; /* ICICI Navy */
+    --secondary: 220 60% 16%; /* ICICI Navy */
+    --secondary-foreground: 25 100% 55%; /* ICICI Orange */
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 25 100% 55%; /* ICICI Orange */
+    --accent-foreground: 220 60% 16%; /* ICICI Navy */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 25 100% 55%; /* ICICI Orange */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .icici-button {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6 py-3 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105;
+  }
+  
+  .icici-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-full px-6 py-3 font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105;
+  }
+  
+  .icici-card {
+    @apply bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300;
+  }
+  
+  .icici-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/80;
+  }
+  
+  .icici-navbar {
+    @apply bg-white border-b border-gray-200 shadow-sm;
+  }
+  
+  .icici-sidebar {
+    @apply bg-secondary text-white;
+  }
+  
+  .icici-loader {
+    @apply w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin;
+  }
+  
+  .icici-progress {
+    @apply bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+  
+  .icici-progress-bar {
+    @apply bg-gradient-to-r from-primary to-primary/80 h-full rounded-full transition-all duration-500;
+  }
+}
+
