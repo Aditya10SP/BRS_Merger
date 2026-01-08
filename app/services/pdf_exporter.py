@@ -25,19 +25,12 @@ class PDFExporter:
     
     def _setup_custom_styles(self):
         """Setup custom paragraph styles for BRS document."""
-        # Try to use Tahoma font, fallback to Helvetica if not available
-        try:
-            title_font = 'Tahoma-Bold'
-            body_font = 'Tahoma'
-            italic_font = 'Tahoma-Italic'
-        except:
-            # Fallback to Helvetica if Tahoma not available
-            title_font = 'Helvetica-Bold'
-            body_font = 'Helvetica'
-            italic_font = 'Helvetica-Oblique'
-            logger.warning("Tahoma font not available, using Helvetica as fallback")
+        # Use standard PDF fonts (Helvetica) which are always available
+        title_font = 'Helvetica-Bold'
+        body_font = 'Helvetica'
+        italic_font = 'Helvetica-Oblique'
         
-        # Title style - 22.4pt Tahoma-Bold
+        # Title style - 22.4pt Helvetica-Bold
         self.styles.add(ParagraphStyle(
             name='BRSTitle',
             parent=self.styles['Heading1'],
@@ -48,7 +41,7 @@ class PDFExporter:
             fontName=title_font
         ))
         
-        # Subtitle style - 16pt Tahoma
+        # Subtitle style - 16pt Helvetica
         self.styles.add(ParagraphStyle(
             name='BRSSubtitle',
             parent=self.styles['Normal'],
@@ -59,7 +52,7 @@ class PDFExporter:
             fontName=body_font
         ))
         
-        # Document metadata style - 12.8pt Tahoma
+        # Document metadata style - 12.8pt Helvetica
         self.styles.add(ParagraphStyle(
             name='Metadata',
             parent=self.styles['Normal'],
@@ -70,7 +63,7 @@ class PDFExporter:
             fontName=body_font
         ))
         
-        # Section heading style - 12.8pt Tahoma-Bold
+        # Section heading style - 12.8pt Helvetica-Bold
         self.styles.add(ParagraphStyle(
             name='SectionHeading',
             parent=self.styles['Heading2'],
@@ -81,7 +74,7 @@ class PDFExporter:
             fontName=title_font
         ))
         
-        # Subsection heading style - 12.8pt Tahoma-Bold
+        # Subsection heading style - 12.8pt Helvetica-Bold
         self.styles.add(ParagraphStyle(
             name='SubsectionHeading',
             parent=self.styles['Heading3'],
@@ -92,7 +85,7 @@ class PDFExporter:
             fontName=title_font
         ))
         
-        # Body text style - 12.8pt Tahoma
+        # Body text style - 12.8pt Helvetica
         self.styles.add(ParagraphStyle(
             name='BRSBody',
             parent=self.styles['Normal'],
