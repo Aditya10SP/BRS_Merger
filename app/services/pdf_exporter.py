@@ -116,8 +116,9 @@ class PDFExporter:
         """
         logger.info(f"Exporting BRS to PDF: {output_path}")
         
-        # Store final_brs for use in header/footer
+        # Store final_brs and output_path for use in header/footer
         self.final_brs = final_brs
+        self.output_path = output_path
         self.generation_time = datetime.now().strftime('%d/%m/%y, %I:%M %p')
         
         # Create PDF document
@@ -190,7 +191,7 @@ class PDFExporter:
         
         # Footer: File path (optional, smaller font)
         canvas.setFont('Helvetica', 6)
-        footer_text = f"file:///{str(doc._filename)}"
+        footer_text = f"file:///{str(self.output_path)}"
         canvas.drawString(72, 50, footer_text)
         
         canvas.restoreState()
