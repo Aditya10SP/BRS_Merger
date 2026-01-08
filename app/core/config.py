@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     
     # Model Configuration
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    LLM_MODEL: str = "deepseek-coder-v2:latest"  # Remote Ollama model - EXCLUSIVE USE
+    LLM_MODEL: str = "llama3.1:latest"  # Remote Ollama model - EXCLUSIVE USE
     LLM_TEMPERATURE: float = 0.1  # Low temperature for deterministic outputs
     LLM_MAX_TOKENS: int = 2000
     LLM_TIMEOUT: float = 300.0  # 5 minute timeout for remote Ollama requests
