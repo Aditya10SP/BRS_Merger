@@ -402,38 +402,15 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-4">
+                  <div className="flex justify-center">
                     {jobStatus?.result?.pdf_output && (
                       <a
                         href={getDownloadUrl(jobStatus.result.pdf_output)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm"
+                        download
+                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
-                        <Download className="w-4 h-4" />
-                        Download PDF
-                      </a>
-                    )}
-                    {jobStatus?.result?.json_output && (
-                      <a
-                        href={getDownloadUrl(jobStatus.result.json_output)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download JSON
-                      </a>
-                    )}
-                    {jobStatus?.result?.markdown_output && (
-                      <a
-                        href={getDownloadUrl(jobStatus.result.markdown_output)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-6 rounded-lg transition-colors shadow-sm"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download Markdown
+                        <Download className="w-5 h-5" />
+                        Download Final BRS (PDF)
                       </a>
                     )}
                   </div>
