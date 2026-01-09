@@ -84,4 +84,10 @@ export const resetVectorStore = async () => {
     return response.data;
 };
 
+// Clear vector store (for new project)
+export const clearVectorStore = async () => {
+    const response = await api.post('/clear-vector-store');
+    return response.data;
+};
+
 export default api;

@@ -66,6 +66,24 @@ async def health_check():
     }
 
 
+@router.post("/clear-vector-store")
+async def clear_vector_store():
+    """
+    Clear all data from the vector store.
+    Use this before starting a new project to avoid data mixing.
+    """
+    try:
+        logger.info("Clearing vector store...")
+        orchestrator.clear_vector_store()
+        return {
+            "status": "success",
+            "message": "Vector store cleared successfully. You can now upload documents for a new project."
+        }
+    except Exception as e:
+        logger.error(f"Error clearing vector store: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/upload/brs")
 async def upload_brs(
     file: UploadFile = File(...),
@@ -264,10 +282,12 @@ async def _consolidate_brs_task(job_id: str, request: ConsolidationRequest):
         json_path = output_dir / f"{request.brs_id}.json"
         md_path = output_dir / f"{request.brs_id}.md"
         pdf_path = output_dir / f"{request.brs_id}.pdf"
+        docx_path = output_dir / f"{request.brs_id}.docx"
         
         orchestrator.export_to_json(final_brs, json_path)
         orchestrator.export_to_markdown(final_brs, md_path)
         orchestrator.export_to_pdf(final_brs, pdf_path)
+        orchestrator.export_to_docx(final_brs, docx_path)
         
         # Update job status
         jobs[job_id].status = "completed"
@@ -280,7 +300,8 @@ async def _consolidate_brs_task(job_id: str, request: ConsolidationRequest):
             "validation_passed": final_brs.validation_passed,
             "json_output": f"/api/v1/download/{request.brs_id}.json",
             "markdown_output": f"/api/v1/download/{request.brs_id}.md",
-            "pdf_output": f"/api/v1/download/{request.brs_id}.pdf"
+            "pdf_output": f"/api/v1/download/{request.brs_id}.pdf",
+            "docx_output": f"/api/v1/download/{request.brs_id}.docx"
         }
         jobs[job_id].updated_at = datetime.now()
         

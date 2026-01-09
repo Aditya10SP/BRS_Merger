@@ -7,9 +7,10 @@ import {
   startConsolidation,
   getJobStatus,
   getStats,
-  getDownloadUrl
+  getDownloadUrl,
+  clearVectorStore
 } from '../src/services/api';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Download } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Download, ChevronDown, FileJson, FileCode, Trash2 } from 'lucide-react';
 
 interface JobResult {
   brs_id: string;
@@ -19,6 +20,7 @@ interface JobResult {
   json_output: string;
   markdown_output: string;
   pdf_output: string;
+  docx_output: string;
 }
 
 interface JobStatus {
@@ -64,6 +66,8 @@ export default function Home() {
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   // Load stats on mount
   useEffect(() => {
@@ -165,6 +169,27 @@ export default function Home() {
     }
   };
 
+  const handleClearVectorStore = async () => {
+    if (!confirm('⚠️ This will clear all uploaded BRS and CR data. Are you sure you want to start a new project?')) {
+      return;
+    }
+    
+    setIsClearing(true);
+    setError(null);
+    try {
+      await clearVectorStore();
+      setUploadedDocs({ brs: [], cr: [] });
+      setJobStatus(null);
+      setConsolidationJob(null);
+      await loadStats();
+      alert('✅ Vector store cleared! You can now upload documents for a new project.');
+    } catch (err: any) {
+      setError(`Failed to clear vector store: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -192,6 +217,18 @@ export default function Home() {
           {/* Stats Card */}
           {stats && (
             <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white shadow-xl mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-slate-700">Current Project Data</h3>
+                <button
+                  onClick={handleClearVectorStore}
+                  disabled={isClearing || isUploading}
+                  className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Clear all data and start a new project"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {isClearing ? 'Clearing...' : 'New Project'}
+                </button>
+              </div>
               <div className="grid grid-cols-3 gap-8">
                 <div className="text-center border-r border-slate-200/50">
                   <p className="text-3xl font-bold text-blue-600">{stats.vector_store?.brs_chunks || 0}</p>
@@ -403,16 +440,77 @@ export default function Home() {
                   </div>
 
                   <div className="flex justify-center">
-                    {jobStatus?.result?.pdf_output && (
-                      <a
-                        href={getDownloadUrl(jobStatus.result.pdf_output)}
-                        download
-                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors shadow-lg hover:shadow-xl"
                       >
                         <Download className="w-5 h-5" />
-                        Download Final BRS (PDF)
-                      </a>
-                    )}
+                        Download Final BRS
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                      
+                      {showDownloadMenu && (
+                        <div className="absolute top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10">
+                          {jobStatus?.result?.pdf_output && (
+                            <a
+                              href={getDownloadUrl(jobStatus.result.pdf_output)}
+                              download
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                              onClick={() => setShowDownloadMenu(false)}
+                            >
+                              <FileText className="w-5 h-5 text-red-600" />
+                              <div>
+                                <div className="font-semibold text-gray-900">PDF Format</div>
+                                <div className="text-xs text-gray-500">Formatted document</div>
+                              </div>
+                            </a>
+                          )}
+                          {jobStatus?.result?.docx_output && (
+                            <a
+                              href={getDownloadUrl(jobStatus.result.docx_output)}
+                              download
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                              onClick={() => setShowDownloadMenu(false)}
+                            >
+                              <FileText className="w-5 h-5 text-blue-600" />
+                              <div>
+                                <div className="font-semibold text-gray-900">DOCX Format</div>
+                                <div className="text-xs text-gray-500">Editable document</div>
+                              </div>
+                            </a>
+                          )}
+                          {jobStatus?.result?.markdown_output && (
+                            <a
+                              href={getDownloadUrl(jobStatus.result.markdown_output)}
+                              download
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                              onClick={() => setShowDownloadMenu(false)}
+                            >
+                              <FileCode className="w-5 h-5 text-gray-600" />
+                              <div>
+                                <div className="font-semibold text-gray-900">Markdown Format</div>
+                                <div className="text-xs text-gray-500">Plain text format</div>
+                              </div>
+                            </a>
+                          )}
+                          {jobStatus?.result?.json_output && (
+                            <a
+                              href={getDownloadUrl(jobStatus.result.json_output)}
+                              download
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                              onClick={() => setShowDownloadMenu(false)}
+                            >
+                              <FileJson className="w-5 h-5 text-green-600" />
+                              <div>
+                                <div className="font-semibold text-gray-900">JSON Format</div>
+                                <div className="text-xs text-gray-500">Structured data</div>
+                              </div>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

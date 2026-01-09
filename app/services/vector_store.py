@@ -553,6 +553,28 @@ class VectorStore:
         
         logger.info("Vector store reset complete")
     
+    def clear_all(self) -> None:
+        """Clear all data from vector store collections."""
+        logger.info("Clearing all vector store data...")
+        
+        # Delete all items from BRS collection
+        brs_count = self.brs_collection.count()
+        if brs_count > 0:
+            all_brs = self.brs_collection.get()
+            if all_brs and 'ids' in all_brs and all_brs['ids']:
+                self.brs_collection.delete(ids=all_brs['ids'])
+                logger.info(f"Deleted {brs_count} BRS chunks")
+        
+        # Delete all items from CR collection
+        cr_count = self.cr_collection.count()
+        if cr_count > 0:
+            all_cr = self.cr_collection.get()
+            if all_cr and 'ids' in all_cr and all_cr['ids']:
+                self.cr_collection.delete(ids=all_cr['ids'])
+                logger.info(f"Deleted {cr_count} CR chunks")
+        
+        logger.info("Vector store cleared successfully")
+    
     def get_stats(self) -> Dict[str, int]:
         """Get statistics about the vector store."""
         return {

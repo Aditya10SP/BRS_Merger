@@ -3,11 +3,18 @@ Configuration settings for the BRS Consolidator system.
 """
 import os
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore"
+    )
     
     # API Configuration
     API_TITLE: str = "GenAI BRS Consolidator"
@@ -22,7 +29,7 @@ class Settings(BaseSettings):
     
     # Model Configuration
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    LLM_MODEL: str = "llama3.1:latest"  # Remote Ollama model - EXCLUSIVE USE
+    LLM_MODEL: str = "deepseek-coder-v2:latest"  # Remote Ollama model - EXCLUSIVE USE
     LLM_TEMPERATURE: float = 0.1  # Low temperature for deterministic outputs
     LLM_MAX_TOKENS: int = 2000
     LLM_TIMEOUT: float = 300.0  # 5 minute timeout for remote Ollama requests
@@ -45,10 +52,6 @@ class Settings(BaseSettings):
     DATA_DIR: str = "./data"
     UPLOAD_DIR: str = "./data/uploads"
     OUTPUT_DIR: str = "./data/outputs"
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 
 settings = Settings()

@@ -18,6 +18,7 @@ from app.services.llm_client import LLMClient
 from app.services.generator import BRSGenerator
 from app.services.validator import BRSValidator
 from app.services.pdf_exporter import PDFExporter
+from app.services.docx_exporter import DOCXExporter
 from app.core.logging_config import logger
 from app.core.config import settings
 
@@ -37,6 +38,7 @@ class BRSOrchestrator:
         self.generator = BRSGenerator(self.llm_client)
         self.validator = BRSValidator(self.llm_client)
         self.pdf_exporter = PDFExporter()
+        self.docx_exporter = DOCXExporter()
         
         logger.info("BRS Orchestrator initialized successfully")
     
@@ -336,6 +338,21 @@ class BRSOrchestrator:
         
         logger.info(f"BRS exported successfully to {output_path}")
     
+    def export_to_docx(self, final_brs: FinalBRS, output_path: Path) -> None:
+        """
+        Export final BRS to DOCX file.
+        
+        Args:
+            final_brs: Final BRS document
+            output_path: Output file path
+        """
+        logger.info(f"Exporting BRS to DOCX: {output_path}")
+        
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        self.docx_exporter.export_to_docx(final_brs, output_path)
+        
+        logger.info(f"BRS exported successfully to {output_path}")
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get system statistics."""
         return {
@@ -343,3 +360,9 @@ class BRSOrchestrator:
             "llm_provider": self.llm_client.provider,
             "llm_model": self.llm_client.model
         }
+    
+    def clear_vector_store(self) -> None:
+        """Clear all data from the vector store."""
+        logger.info("Clearing vector store...")
+        self.vector_store.clear_all()
+        logger.info("Vector store cleared successfully")
