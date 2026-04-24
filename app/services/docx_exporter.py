@@ -14,15 +14,19 @@ from app.core.logging_config import logger
 class DOCXExporter:
     """Export Final BRS to formatted DOCX document."""
     
-    def export_to_docx(self, final_brs: FinalBRS, output_path: Path) -> None:
+    def export_to_docx(self, final_brs: FinalBRS, output_path: Path, template=None) -> None:
         """
         Export Final BRS to DOCX document.
         
         Args:
             final_brs: Final BRS object
             output_path: Path to save DOCX file
+            template: Optional DocumentTemplate for formatting
         """
         logger.info(f"Exporting BRS to DOCX: {output_path}")
+        
+        # Store template for use in formatting
+        self.template = template
         
         # Create document
         doc = Document()
@@ -65,13 +69,6 @@ class DOCXExporter:
         run = title.add_run(final_brs.title or "Business Requirements Specification")
         run.font.size = Pt(24)
         run.font.bold = True
-        run.font.color.rgb = RGBColor(26, 26, 26)
-        
-        # Subtitle
-        subtitle = doc.add_paragraph()
-        subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = subtitle.add_run("Scramble 2.0 - Sensitive Data Masking System")
-        run.font.size = Pt(16)
         run.font.color.rgb = RGBColor(26, 26, 26)
         
         doc.add_paragraph()

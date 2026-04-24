@@ -76,12 +76,14 @@ export default function Home() {
 
   // Poll job status
   useEffect(() => {
-    if (consolidationJob && jobStatus?.status === 'processing') {
+    if (consolidationJob && (jobStatus?.status === 'processing' || jobStatus?.status === 'pending')) {
       const interval = setInterval(async () => {
         try {
           const status = await getJobStatus(consolidationJob);
+          console.log('Job status update:', status);
           setJobStatus(status);
           if (status.status === 'completed' || status.status === 'failed') {
+            console.log('Job completed! Result:', status.result);
             clearInterval(interval);
             loadStats();
           }
@@ -408,6 +410,21 @@ export default function Home() {
               )}
 
               <p className="text-slate-600 mb-6 font-medium">{jobStatus.message}</p>
+
+              {/* Debug info */}
+              {jobStatus.status === 'completed' && (
+                <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+                  <strong>Debug:</strong> Result exists: {jobStatus.result ? 'Yes' : 'No'}
+                  {jobStatus.result && (
+                    <div>
+                      <div>PDF: {jobStatus.result.pdf_output || 'missing'}</div>
+                      <div>DOCX: {jobStatus.result.docx_output || 'missing'}</div>
+                      <div>JSON: {jobStatus.result.json_output || 'missing'}</div>
+                      <div>MD: {jobStatus.result.markdown_output || 'missing'}</div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {jobStatus.result && (
                 <div className="space-y-6">

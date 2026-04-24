@@ -106,15 +106,19 @@ class PDFExporter:
             fontName=italic_font
         ))
     
-    def export_to_pdf(self, final_brs: FinalBRS, output_path: Path) -> None:
+    def export_to_pdf(self, final_brs: FinalBRS, output_path: Path, template=None) -> None:
         """
         Export Final BRS to PDF document.
         
         Args:
             final_brs: Final BRS object
             output_path: Path to save PDF file
+            template: Optional DocumentTemplate for formatting
         """
         logger.info(f"Exporting BRS to PDF: {output_path}")
+        
+        # Store template for use in formatting
+        self.template = template
         
         # Store final_brs and output_path for use in header/footer
         self.final_brs = final_brs
@@ -209,11 +213,6 @@ class PDFExporter:
             self.styles['BRSTitle']
         )
         elements.append(title)
-        
-        # Add Subtitle
-        # Use a default subtitle since it's not in the schema yet, or derive from ID
-        subtitle_text = "Scramble 2.0 - Sensitive Data Masking System"
-        elements.append(Paragraph(subtitle_text, self.styles['BRSSubtitle']))
         
         elements.append(Spacer(1, 0.5 * inch))
         

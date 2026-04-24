@@ -1,7 +1,7 @@
 """
 Orchestrator service that coordinates the entire BRS consolidation pipeline.
 """
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any, Callable, Optional
 from pathlib import Path
 import json
 from datetime import datetime
@@ -19,6 +19,11 @@ from app.services.generator import BRSGenerator
 from app.services.validator import BRSValidator
 from app.services.pdf_exporter import PDFExporter
 from app.services.docx_exporter import DOCXExporter
+from app.services.template_extractor import TemplateExtractor, DocumentTemplate
+from app.services.brs_template import BRSTemplate
+from app.services.brs_mapper import BRSMapper
+from app.services.missing_section_generator import MissingSectionGenerator
+from app.services.completeness_checker import CompletenessChecker
 from app.core.logging_config import logger
 from app.core.config import settings
 
@@ -39,6 +44,14 @@ class BRSOrchestrator:
         self.validator = BRSValidator(self.llm_client)
         self.pdf_exporter = PDFExporter()
         self.docx_exporter = DOCXExporter()
+        self.template_extractor = TemplateExtractor()
+        self.brs_template = BRSTemplate()
+        self.brs_mapper = BRSMapper()
+        self.missing_section_generator = MissingSectionGenerator(self.llm_client, self.rag_engine)
+        self.completeness_checker = CompletenessChecker(self.vector_store, self.llm_client)
+        
+        # Store the document template from first uploaded BRS
+        self.document_template: Optional[DocumentTemplate] = None
         
         logger.info("BRS Orchestrator initialized successfully")
     
@@ -60,6 +73,17 @@ class BRSOrchestrator:
             Parsed BRS document
         """
         logger.info(f"Processing BRS document: {file_path}")
+        
+        # Extract template from first BRS document
+        if self.document_template is None:
+            logger.info("Extracting document template from first BRS")
+            if file_path.suffix.lower() == '.docx':
+                self.document_template = self.template_extractor.extract_from_docx(file_path)
+            elif file_path.suffix.lower() == '.pdf':
+                self.document_template = self.template_extractor.extract_from_pdf(file_path)
+            else:
+                self.document_template = self.template_extractor._get_default_template()
+            logger.info(f"Template extracted: numbering format = {self.document_template.section_numbering_format}")
         
         # Parse document
         brs_doc = self.parser.parse_brs_document(file_path, doc_id, version)
@@ -117,25 +141,23 @@ class BRSOrchestrator:
         progress_callback: Callable[[int, int, str], None] = None
     ) -> FinalBRS:
         """
-        Generate the final consolidated BRS.
+        Generate the final consolidated BRS using template-based approach.
         
         Args:
             brs_id: Final BRS identifier
             title: BRS title
             version: Final version number
             section_outline: Optional list of sections to generate
-                            Format: [{"section_id": "...", "section_title": "...", "section_path": "..."}]
         
         Returns:
             Final consolidated BRS
         """
-        logger.info(f"Starting BRS consolidation: {brs_id}")
+        logger.info(f"Starting template-based BRS consolidation: {brs_id}")
         
-        # If no outline provided, extract from vector store
+        # Step 1: Generate sections from source documents
         if not section_outline:
             section_outline = self._extract_section_outline()
         
-        # Generate each section
         generated_sections = []
         all_source_docs = set()
         all_applied_crs = set()
@@ -145,6 +167,7 @@ class BRSOrchestrator:
         for i, section_spec in enumerate(section_outline):
             if progress_callback:
                 progress_callback(i, total_sections, f"Generating section {i+1} of {total_sections}")
+            
             section_id = section_spec.get("section_id")
             section_title = section_spec.get("section_title")
             section_path = section_spec.get("section_path")
@@ -166,12 +189,52 @@ class BRSOrchestrator:
             all_source_docs.update(evidence_pack.source_documents)
             all_applied_crs.update(generated_section.applied_changes)
         
+        # Step 2: Map generated sections to BRS template
+        logger.info("Mapping sections to BRS template")
+        section_mapping = self.brs_mapper.map_sections_to_template(generated_sections)
+        
+        # Step 3: Identify missing required sections
+        missing_sections = self.brs_mapper.identify_missing_sections(section_mapping)
+        
+        # Step 4: Generate missing sections
+        if missing_sections:
+            logger.info(f"Generating {len(missing_sections)} missing sections")
+            project_context = {
+                "title": title,
+                "source_documents": list(all_source_docs),
+                "applied_changes": list(all_applied_crs)
+            }
+            
+            for i, missing_section in enumerate(missing_sections):
+                if progress_callback:
+                    progress_callback(
+                        total_sections + i,
+                        total_sections + len(missing_sections),
+                        f"Generating missing section: {missing_section.section_title}"
+                    )
+                
+                generated = self.missing_section_generator.generate_missing_section(
+                    missing_section,
+                    project_context,
+                    generated_sections
+                )
+                
+                # Add to mapping
+                if missing_section.section_number not in section_mapping:
+                    section_mapping[missing_section.section_number] = []
+                section_mapping[missing_section.section_number].append(generated)
+                generated_sections.append(generated)
+        
+        # Step 5: Assemble complete BRS following template order
+        logger.info("Assembling complete BRS document")
+        ordered_sections = self._order_sections_by_template(section_mapping)
+        
         # Assemble final BRS
         final_brs = self.generator.generate_final_brs(
             brs_id=brs_id,
             title=title,
             version=version,
-            sections=generated_sections,
+            sections=ordered_sections,
             source_brs_documents=list(all_source_docs),
             applied_change_requests=list(all_applied_crs)
         )
@@ -185,6 +248,78 @@ class BRSOrchestrator:
         )
         
         return final_brs
+    
+    def _order_sections_by_template(
+        self,
+        section_mapping: Dict[str, List[GeneratedSection]]
+    ) -> List[GeneratedSection]:
+        """
+        Order sections according to BRS template structure.
+        
+        Args:
+            section_mapping: Mapping of template sections to generated sections
+        
+        Returns:
+            Ordered list of sections
+        """
+        ordered_sections = []
+        
+        for template_section in self.brs_template.get_all_sections_flat():
+            section_num = template_section.section_number
+            if section_num in section_mapping:
+                # If multiple sections mapped to same template section, merge or take first
+                sections = section_mapping[section_num]
+                if len(sections) == 1:
+                    ordered_sections.append(sections[0])
+                else:
+                    # Merge multiple sections
+                    merged = self._merge_sections(sections, template_section)
+                    ordered_sections.append(merged)
+        
+        return ordered_sections
+    
+    def _merge_sections(
+        self,
+        sections: List[GeneratedSection],
+        template_section
+    ) -> GeneratedSection:
+        """
+        Merge multiple sections into one.
+        
+        Args:
+            sections: List of sections to merge
+            template_section: Template section they map to
+        
+        Returns:
+            Merged section
+        """
+        # Combine content
+        combined_content = []
+        all_sources = set()
+        all_changes = set()
+        
+        for section in sections:
+            combined_content.append(f"### {section.section_title}\n\n{section.content}")
+            all_sources.update(section.source_documents)
+            all_changes.update(section.applied_changes)
+        
+        merged_content = "\n\n".join(combined_content)
+        
+        # Calculate average confidence score (handle None values)
+        confidence_scores = [s.confidence_score for s in sections if s.confidence_score is not None]
+        avg_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else None
+        
+        return GeneratedSection(
+            section_id=f"SEC-{template_section.section_number.replace('.', '-')}",
+            section_title=template_section.section_title,
+            section_path=template_section.section_number,
+            content=merged_content,
+            source_documents=list(all_sources),
+            applied_changes=list(all_changes),
+            confidence_score=avg_confidence,
+            generation_metadata={"merged_from": len(sections)}
+        )
+
     
     def _extract_section_outline(self) -> List[Dict[str, str]]:
         """
@@ -334,7 +469,8 @@ class BRSOrchestrator:
         logger.info(f"Exporting BRS to PDF: {output_path}")
         
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        self.pdf_exporter.export_to_pdf(final_brs, output_path)
+        # Pass the document template to the exporter
+        self.pdf_exporter.export_to_pdf(final_brs, output_path, self.document_template)
         
         logger.info(f"BRS exported successfully to {output_path}")
     
@@ -349,7 +485,8 @@ class BRSOrchestrator:
         logger.info(f"Exporting BRS to DOCX: {output_path}")
         
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        self.docx_exporter.export_to_docx(final_brs, output_path)
+        # Pass the document template to the exporter
+        self.docx_exporter.export_to_docx(final_brs, output_path, self.document_template)
         
         logger.info(f"BRS exported successfully to {output_path}")
     
@@ -365,4 +502,20 @@ class BRSOrchestrator:
         """Clear all data from the vector store."""
         logger.info("Clearing vector store...")
         self.vector_store.clear_all()
+        # Also clear the document template for new project
+        self.document_template = None
         logger.info("Vector store cleared successfully")
+    
+    def check_completeness(self, final_brs: FinalBRS) -> Dict[str, Any]:
+        """
+        Check completeness and coverage of final BRS.
+        
+        Args:
+            final_brs: Final BRS document to check
+        
+        Returns:
+            Completeness report as dictionary
+        """
+        logger.info(f"Running completeness check for BRS: {final_brs.brs_id}")
+        report = self.completeness_checker.check_completeness(final_brs)
+        return report.to_dict()

@@ -371,6 +371,51 @@ async def get_stats():
     return orchestrator.get_stats()
 
 
+@router.get("/completeness/{job_id}")
+async def check_completeness(job_id: str):
+    """
+    Check completeness and coverage of a consolidated BRS.
+    
+    Args:
+        job_id: Job ID of the consolidation
+    
+    Returns:
+        Completeness report with scores and recommendations
+    """
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    job = jobs[job_id]
+    
+    if job["status"] != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Job is not completed yet. Current status: {job['status']}"
+        )
+    
+    if not job.get("result") or not job["result"].get("final_brs"):
+        raise HTTPException(status_code=404, detail="Final BRS not found for this job")
+    
+    try:
+        # Get the final BRS from job result
+        final_brs_dict = job["result"]["final_brs"]
+        final_brs = FinalBRS(**final_brs_dict)
+        
+        # Run completeness check
+        logger.info(f"Running completeness check for job {job_id}")
+        report = orchestrator.check_completeness(final_brs)
+        
+        return {
+            "status": "success",
+            "job_id": job_id,
+            "report": report
+        }
+    
+    except Exception as e:
+        logger.error(f"Error checking completeness: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/reset")
 async def reset_vector_store():
     """

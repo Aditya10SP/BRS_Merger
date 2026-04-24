@@ -290,6 +290,10 @@ class GeneratedSection(BaseModel):
     applied_changes: List[str] = Field(default_factory=list, description="Applied CR IDs")
     generation_timestamp: datetime = Field(default_factory=datetime.now)
     
+    # Generation metadata (optional)
+    confidence_score: Optional[float] = Field(None, description="Confidence score for generated content (0-1)")
+    generation_metadata: Optional[Dict[str, Any]] = Field(None, description="Additional generation metadata")
+    
     class Config:
         json_schema_extra = {
             "example": {
